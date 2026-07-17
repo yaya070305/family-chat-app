@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>相亲相爱一家人 · 家庭群</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #c7e0b4; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 12px; position: relative; }
+        .copy-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: #e4a3b7;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .copy-btn:hover { background: #d48aa0; }
+        .app { width: 100%; max-width: 1400px; height: 95vh; background: #fff9e8; border-radius: 2rem; display: flex; overflow: hidden; position: relative; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15); }
+        .sidebar {
+            width: 280px;
+            background: #d9f0c5;
+            border-right: 1px solid #b8d9a6;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 10;
+            height: 100%;
+            max-height: 100%;
+        }
+        .chat { flex: 1; display: flex; flex-direction: column; background: #fff4e4; min-width: 0; }
+        .menu-btn { display: none; position: fixed; top: 20px; left: 20px; z-index: 20; background: #e4a3b7; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; color: white; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 15; }
+        @media (max-width: 700px) {
+            .sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; transform: translateX(-100%); z-index: 30; border-radius: 0 1rem 1rem 0; }
+            .sidebar.open { transform: translateX(0); }
+            .menu-btn { display: flex; align-items: center; justify-content: center; }
+            .chat { width: 100%; border-radius: 1rem; }
+            .chat-header { padding-left: 60px; }
+        }
+        .header { padding: 16px 12px 8px; border-bottom: 1px solid #b8d9a6; }
+        .header h2 { font-size: 1.2rem; color: #5c8f4c; }
+        .member-list { padding: 12px; border-bottom: 1px solid #b8d9a6; }
+        .member-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; color: #4a6e3b; font-size: 0.85rem; }
+        .member-avatar { width: 32px; height: 32px; background: #f5b0c0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .setting-block { padding: 12px; border-bottom: 1px solid #b8d9a6; background: #eafadc; }
+        .setting-block h4 { font-size: 0.75rem; color: #5c8f4c; margin-bottom: 8px; }
+        .setting-row { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+        .setting-row label { font-size: 0.7rem; color: #4a6e3b; }
+        .setting-row input { width: 70px; padding: 4px; border-radius: 20px; border: 1px solid #b8d9a6; text-align: center; }
+        .toggle-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #4a6e3b; }
+        .category-box { padding: 12px; border-bottom: 1px solid #b8d9a6; background: #f6fcee; }
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .category-header h4 { font-size: 0.75rem; color: #5c8f4c; }
+        .add-cat-btn { background: #e4a3b7; border: none; border-radius: 20px; padding: 2px 10px; font-size: 0.7rem; cursor: pointer; color: white; }
+        .category-list { max-height: 120px; overflow-y: auto; background: #ffffff; border-radius: 16px; padding: 6px; margin-bottom: 8px; }
+        .category-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; padding: 4px 8px; background: white; border-radius: 20px; margin-bottom: 4px; border: 1px solid #d9f0c5; }
+        .del-cat { background: none; border: none; color: #c28aa0; cursor: pointer; font-size: 1rem; }
+        .phrase-box { padding: 12px; flex: 1; display: flex; flex-direction: column; overflow: visible; }
+        .phrase-box h4 { font-size: 0.75rem; margin-bottom: 6px; color: #5c8f4c; }
+        .phrase-list { max-height: 140px; overflow-y: auto; background: #ffffff; border-radius: 20px; padding: 6px; margin-bottom: 8px; }
+        .phrase-item { font-size: 0.7rem; background: #ffffff; padding: 4px 8px; border-radius: 20px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #d9f0c5; }
+        .phrase-info { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .phrase-cat { font-size: 0.6rem; background: #e4a3b7; color: white; padding: 0 6px; border-radius: 12px; }
+        .del-phrase { background: none; border: none; color: #c28aa0; cursor: pointer; font-size: 0.9rem; }
+        .add-phrase {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .add-phrase textarea {
+            width: 100%;
+            border-radius: 20px;
+            border: 1px solid #b8d9a6;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            background: white;
+            resize: vertical;
+            transition: 0.2s;
+        }
+        .add-phrase textarea:focus {
+            outline: none;
+            border-color: #e4a3b7;
+            box-shadow: 0 0 0 2px rgba(228,163,183,0.2);
+        }
+        .add-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .add-phrase select {
+            flex: 2;
+            border: 1px solid #b8d9a6;
+            border-radius: 30px;
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            background: white;
+        }
+        .add-phrase button {
+            background: #e4a3b7;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 16px;
+            cursor: pointer;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .add-phrase button:hover { background: #d48aa0; }
+        .import-json-btn, .export-json-btn { background: #c1d9f0; color: #3a5c7c; margin-top: 8px; width: 100%; border: none; border-radius: 30px; padding: 5px 0; font-size: 0.7rem; cursor: pointer; transition: 0.2s; }
+        .export-json-btn { background: #b7c3b0; margin-top: 4px; }
+        .import-json-btn:hover, .export-json-btn:hover { filter: brightness(0.96); }
+        .chat-header { padding: 12px 16px; background: #fff0da; border-bottom: 1px solid #ffdfb8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .chat-header h3 { color: #c28a40; font-size: 1rem; }
+        .action-buttons { display: flex; gap: 8px; }
+        .video-call-btn, .letter-btn, .force-reply-btn { background: #b7c3b0; border: none; padding: 5px 14px; border-radius: 40px; cursor: pointer; color: #2e577a; font-size: 0.8rem; }
+        .force-reply-btn { background: #e4a3b7; color: white; }
+        .msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #fffbf0; }
+        .msg { max-width: 90%; display: flex; gap: 10px; align-items: flex-start; position: relative; }
+        .msg-avatar { width: 36px; height: 36px; background: #b7c3b0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .msg-content { flex: 1; }
+        .msg-name { font-size: 0.7rem; color: #5a7c9e; margin-bottom: 4px; font-weight: 500; }
+        .bubble { padding: 8px 14px; border-radius: 18px; font-size: 0.85rem; background: white; display: inline-block; max-width: 100%; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg-time { font-size: 0.6rem; color: #93aec9; margin-top: 4px; }
+        .msg-revoke { position: absolute; right: 0; top: 0; font-size: 0.7rem; color: #c28aa0; cursor: pointer; background: rgba(255,255,240,0.8); padding: 0 6px; border-radius: 12px; display: none; }
+        .msg:hover .msg-revoke { display: block; }
+        .input-area { display: flex; gap: 10px; padding: 12px 16px; background: #fff0da; border-top: 1px solid #ffdfb8; align-items: center; flex-wrap: wrap; }
+        .input-area input { flex: 2; border: none; background: white; border-radius: 40px; padding: 12px 16px; font-size: 0.95rem; min-width: 120px; }
+        .input-area button { background: #b7d0e8; border: none; width: 46px; height: 46px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; color: #2c577c; flex-shrink: 0; transition: 0.2s; }
+        .input-area button:hover { background: #a3bed6; }
+        .call-modal, .incoming-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 1000; }
+        .call-card { background: #fff9fd; padding: 24px; border-radius: 2rem; text-align: center; width: 280px; box-shadow: 0 20px 30px rgba(0,0,0,0.2); }
+        .call-card h3 { margin-bottom: 16px; color: #ad6a7c; }
+        .call-card button { background: #b7c3b0; border: none; padding: 8px 20px; border-radius: 40px; margin: 8px; cursor: pointer; }
+        .timer { font-size: 1.2rem; font-weight: bold; margin: 12px 0; font-family: monospace; }
+        .letter-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1001; }
+        .letter-card { background: #fff9fd; padding: 24px; border-radius: 2rem; width: 90%; max-width: 500px; }
+        .letter-card textarea { width: 100%; height: 200px; margin: 12px 0; padding: 12px; border-radius: 1rem; border: 1px solid #f8c1cf; font-family: inherit; }
+        .letter-card button { background: #b7c3b0; border: none; padding: 8px 20px; border-radius: 40px; margin-right: 8px; cursor: pointer; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 18px; border-radius: 40px; font-size: 14px; z-index: 2000; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+    </style>
+</head>
+<body>
+<button class="copy-btn" id="copyBtn">📋 复制代码</button>
+<div class="app">
+    <div class="sidebar" id="sidebar">
+        <div class="header"><h2>👨‍👩‍👧‍👦 相亲相爱一家人</h2></div>
+        <div class="member-list">
+            <div class="member-item"><div class="member-avatar">👴🏻</div><span>祁爷爷👴🏻</span></div>
+            <div class="member-item"><div class="member-avatar">👱🏻‍♂️</div><span>大宝哥哥👱🏻‍♂️</span></div>
+            <div class="member-item"><div class="member-avatar">👩🏻</div><span>丫丫姨姨👩🏻</span></div>
+            <div class="member-item"><div class="member-avatar">🫓</div><span>饼饼🫓</span></div>
+            <div class="member-item"><div class="member-avatar">🐭</div><span>鼠鼠🐭</span></div>
+        </div>
+        <div class="setting-block">
+            <h4>⏱️ 主动发送间隔 (分钟)</h4>
+            <div class="setting-row">
+                <label>最小</label><input type="number" id="activeMinMin" step="0.5" min="0.5" value="1">
+                <label>最大</label><input type="number" id="activeMaxMin" step="0.5" min="1" value="5">
+            </div>
+            <div class="toggle-row"><input type="checkbox" id="enableActiveTalk" checked> <label>开启主动发送</label></div>
+        </div>
+        <div class="setting-block">
+            <h4>💬 回复延迟 (秒)</h4>
+            <div class="setting-row">
+                <label>最小</label><input type="number" id="replyDelaySecMin" step="1" min="1" value="5">
+                <label>最大</label><input type="number" id="replyDelaySecMax" step="1" min="2" value="90">
+            </div>
+        </div>
+        <div class="setting-block">
+            <h4>✉️ 回信延迟 (小时)</h4>
+            <div class="setting-row">
+                <label>最小</label><input type="number" id="letterDelayMin" step="0.5" min="1" value="5">
+                <label>最大</label><input type="number" id="letterDelayMax" step="0.5" min="2" value="18">
+            </div>
+        </div>
+        <div class="setting-block">
+            <h4>📞 随机来电间隔 (分钟)</h4>
+            <div class="setting-row">
+                <label>最小</label><input type="number" id="callMinMin" step="0.5" min="1" value="5">
+                <label>最大</label><input type="number" id="callMaxMin" step="0.5" min="2" value="15">
+            </div>
+            <div class="toggle-row"><input type="checkbox" id="enableIncomingCall" checked> <label>开启随机来电</label></div>
+        </div>
+        <div class="category-box">
+            <div class="category-header"><h4>🏷️ 词库分类</h4><button id="addCategoryBtn" class="add-cat-btn">+ 新建</button></div>
+            <div class="category-list" id="categoryList"></div>
+        </div>
+        <div class="phrase-box">
+            <h4>📝 词库句子 · 批量添加（一行一字卡）</h4>
+            <div class="phrase-list" id="phraseList"></div>
+            <div class="add-phrase">
+                <textarea id="newPhraseText" placeholder="每行一个温馨句子 / 字卡 ✨&#10;例如：&#10;今天天气真好呀☀️&#10;记得多喝热水💧&#10;晚上一起吃饭吗？"></textarea>
+                <div class="add-controls">
+                    <select id="newPhraseCat"></select>
+                    <button id="addPhraseBtn">📦 批量添加 (每行一条)</button>
+                </div>
+            </div>
+            <button id="importJsonBtn" class="import-json-btn">📂 导入JSON词库</button>
+            <button id="exportJsonBtn" class="export-json-btn">📤 导出当前词库</button>
+        </div>
+    </div>
+    <div class="chat">
+        <div class="chat-header">
+            <h3>🏠 相亲相爱一家人 · 全员可见</h3>
+            <div class="action-buttons">
+                <button id="forceReplyBtn" class="force-reply-btn">📬 补发回信</button>
+                <button id="videoCallBtn" class="video-call-btn">📹 视频通话</button>
+                <button id="letterBtn" class="letter-btn">✉️ 写信</button>
+            </div>
+        </div>
+        <div class="msgs" id="msgsArea"></div>
+        <div class="input-area">
+            <input type="text" id="msgInput" placeholder="说点什么...">
+            <button id="emojiBtn">🖼️</button>
+            <button id="sendBtn">➤</button>
+        </div>
+    </div>
+</div>
+<button class="menu-btn" id="menuBtn">☰</button>
+<div class="menu-overlay" id="menuOverlay"></div>
+<div id="callModal" class="call-modal"><div class="call-card"><h3 id="callTitle">选择通话对象</h3><div id="callButtons">
+    <button data-target="祁爷爷👴🏻">打给祁爷爷</button>
+    <button data-target="大宝哥哥👱🏻‍♂️">打给大宝哥哥</button>
+    <button data-target="丫丫姨姨👩🏻">打给丫丫姨姨</button>
+    <button data-target="饼饼🫓">打给饼饼</button>
+    <button data-target="鼠鼠🐭">打给鼠鼠</button>
+</div><div id="callStatus"></div><div id="callTimer" class="timer"></div><button id="hangupBtn" style="display:none;">挂断</button><button id="closeCallBtn">关闭</button></div></div>
+<div id="incomingModal" class="incoming-modal"><div class="call-card"><h3 id="incomingFrom">📞 来电</h3><button id="acceptBtn">接听</button><button id="rejectBtn">拒绝</button></div></div>
+<div id="letterModal" class="letter-modal"><div class="letter-card"><h3>✉️ 写一封信</h3><textarea id="letterContent" placeholder="给家人写点什么..."></textarea><button id="sendLetterBtn">发送</button><button id="closeLetterBtn">取消</button></div></div>
+<div id="toast" class="toast"></div>
+<script>
+    const FAMILY_PREFIX = 'family_room_';
+    const members = [
+        { name: "祁爷爷👴🏻", avatar: "👴🏻" },
+        { name: "大宝哥哥👱🏻‍♂️", avatar: "👱🏻‍♂️" },
+        { name: "丫丫姨姨👩🏻", avatar: "👩🏻" },
+        { name: "饼饼🫓", avatar: "🫓" },
+        { name: "鼠鼠🐭", avatar: "🐭" }
+    ];
+    const currentUser = "丫丫姨姨👩🏻";
+    let allMessages = [];
+    let phrases = [];
+    let categories = ["默认"];
+    let activeMin = 1, activeMax = 5, enableActive = true;
+    let replyDelaySecMin = 5, replyDelaySecMax = 90;
+    let letterDelayMin = 5, letterDelayMax = 18;
+    let callMin = 5, callMax = 15, enableIncoming = true;
+    let activeTimer = null, incomingTimer = null, currentLetterTimer = null;
+    let callActive = false, callTimerInterval = null, callStartTime = null, incomingTimeout = null;
+    function getCurrentTime() { let d = new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;': m==='<'?'&lt;': '&gt;'); }
+    function showToast(msg) { let t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = '1'; setTimeout(() => { t.style.opacity = '0'; }, 2200); }
+    let originalTitle = document.title;
+    let titleInterval = null;
+    function playBeep() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioCtx.currentTime;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(600, now);
+            oscillator.frequency.setValueAtTime(800, now + 0.05);
+            oscillator.frequency.setValueAtTime(600, now + 0.1);
+            oscillator.frequency.setValueAtTime(800, now + 0.15);
+            oscillator.frequency.setValueAtTime(1000, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        } catch(e) {}
+    }
+    function triggerVibration() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate([100, 50, 100]);
+        }
+    }
+    function strongNotify(sender, content) {
+        if(titleInterval) clearInterval(titleInterval);
+        let count = 0;
+        titleInterval = setInterval(() => {
+            document.title = (count % 2 === 0) ? `📩 新回信！` : originalTitle;
+            count++;
+            if(count > 8) { clearInterval(titleInterval); document.title = originalTitle; titleInterval = null; }
+        }, 400);
+        playBeep();
+        triggerVibration();
+        if (Notification.permission === 'granted') {
+            new Notification(`✨ 来自 ${sender} 的回信 ✨`, { body: content.length > 50 ? content.slice(0,50)+'…' : content });
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+        showToast(`💌 收到回信：${content.slice(0,30)}`);
+    }
+    function addMessage(sender, text, img, isLetter = false, isReply = false) {
+        const newMsg = { id: Date.now(), sender, text, img, time: getCurrentTime(), timestamp: Date.now(), isLetter, isReply };
+        allMessages.push(newMsg);
+        saveAllData();
+        renderMessages();
+        if(sender !== currentUser) strongNotify(sender, text || "图片消息");
+        return newMsg;
+    }
+    function renderMessages() {
+        const area = document.getElementById('msgsArea');
+        if(!allMessages.length) { area.innerHTML = '<div style="text-align:center;color:#93aec9;padding:30px;">✨ 欢迎来到我们的家 ✨</div>'; return; }
+        area.innerHTML = '';
+        const now = Date.now();
+        allMessages.slice().forEach(msg => {
+            const member = members.find(m => m.name === msg.sender) || { name: msg.sender, avatar: "❓" };
+            const canRevoke = (msg.sender === currentUser) && (now - msg.timestamp < 2 * 60 * 1000);
+            let content = msg.text ? escapeHtml(msg.text) : (msg.img ? `<img src="${msg.img}" style="max-width:180px;max-height:140px;border-radius:16px;" onclick="window.open(this.src)">` : '');
+            if(msg.isLetter) content = `[信] ${content}`;
+            if(msg.isReply) content = `[回信] ${content}`;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            msgDiv.innerHTML = `
+                <div class="msg-avatar">${member.avatar}</div>
+                <div class="msg-content">
+                    <div class="msg-name">${escapeHtml(member.name)}</div>
+                    <div class="bubble">${content}</div>
+                    <div class="msg-time">${msg.time}</div>
+                </div>
+                ${canRevoke ? `<div class="msg-revoke" data-id="${msg.id}">撤回</div>` : ''}
+            `;
+            area.appendChild(msgDiv);
+        });
+        document.querySelectorAll('.msg-revoke').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const id = parseInt(el.dataset.id);
+                allMessages = allMessages.filter(m => m.id !== id);
+                saveAllData();
+                renderMessages();
+            });
+        });
+        area.scrollTop = area.scrollHeight;
+    }
+    function saveAllData() {
+        localStorage.setItem(FAMILY_PREFIX + 'msgs', JSON.stringify(allMessages));
+        localStorage.setItem(FAMILY_PREFIX + 'phrases', JSON.stringify(phrases));
+        localStorage.setItem(FAMILY_PREFIX + 'cats', JSON.stringify(categories));
+        localStorage.setItem(FAMILY_PREFIX + 'activeMin', activeMin);
+        localStorage.setItem(FAMILY_PREFIX + 'activeMax', activeMax);
+        localStorage.setItem(FAMILY_PREFIX + 'enableActive', enableActive);
+        localStorage.setItem(FAMILY_PREFIX + 'replyDelaySecMin', replyDelaySecMin);
+        localStorage.setItem(FAMILY_PREFIX + 'replyDelaySecMax', replyDelaySecMax);
+        localStorage.setItem(FAMILY_PREFIX + 'letterDelayMin', letterDelayMin);
+        localStorage.setItem(FAMILY_PREFIX + 'letterDelayMax', letterDelayMax);
+        localStorage.setItem(FAMILY_PREFIX + 'callMin', callMin);
+        localStorage.setItem(FAMILY_PREFIX + 'callMax', callMax);
+        localStorage.setItem(FAMILY_PREFIX + 'enableIncoming', enableIncoming);
+    }
+    function loadAllData() {
+        let msgs = localStorage.getItem(FAMILY_PREFIX + 'msgs');
+        allMessages = msgs ? JSON.parse(msgs) : [];
+        let p = localStorage.getItem(FAMILY_PREFIX + 'phrases');
+        phrases = p ? JSON.parse(p) : [];
+        let c = localStorage.getItem(FAMILY_PREFIX + 'cats');
+        categories = c ? JSON.parse(c) : ["默认"];
+        if(phrases.length === 0) phrases = [];
+        if(categories.length === 0) categories = ["默认"];
+        let aMin = localStorage.getItem(FAMILY_PREFIX + 'activeMin'); if(aMin) activeMin = parseFloat(aMin);
+        let aMax = localStorage.getItem(FAMILY_PREFIX + 'activeMax'); if(aMax) activeMax = parseFloat(aMax);
+        let enAct = localStorage.getItem(FAMILY_PREFIX + 'enableActive'); if(enAct) enableActive = enAct === 'true';
+        let rMin = localStorage.getItem(FAMILY_PREFIX + 'replyDelaySecMin'); if(rMin) replyDelaySecMin = parseFloat(rMin);
+        let rMax = localStorage.getItem(FAMILY_PREFIX + 'replyDelaySecMax'); if(rMax) replyDelaySecMax = parseFloat(rMax);
+        let lMin = localStorage.getItem(FAMILY_PREFIX + 'letterDelayMin'); if(lMin) letterDelayMin = parseFloat(lMin);
+        let lMax = localStorage.getItem(FAMILY_PREFIX + 'letterDelayMax'); if(lMax) letterDelayMax = parseFloat(lMax);
+        let cMin = localStorage.getItem(FAMILY_PREFIX + 'callMin'); if(cMin) callMin = parseFloat(cMin);
+        let cMax = localStorage.getItem(FAMILY_PREFIX + 'callMax'); if(cMax) callMax = parseFloat(cMax);
+        let enInc = localStorage.getItem(FAMILY_PREFIX + 'enableIncoming'); if(enInc) enableIncoming = enInc === 'true';
+        document.getElementById('activeMinMin').value = activeMin;
+        document.getElementById('activeMaxMin').value = activeMax;
+        document.getElementById('enableActiveTalk').checked = enableActive;
+        document.getElementById('replyDelaySecMin').value = replyDelaySecMin;
+        document.getElementById('replyDelaySecMax').value = replyDelaySecMax;
+        document.getElementById('letterDelayMin').value = letterDelayMin;
+        document.getElementById('letterDelayMax').value = letterDelayMax;
+        document.getElementById('callMinMin').value = callMin;
+        document.getElementById('callMaxMin').value = callMax;
+        document.getElementById('enableIncomingCall').checked = enableIncoming;
+    }
+    function getRandomReplyDelayMs() { let min = Math.max(1, replyDelaySecMin); let max = Math.max(min+1, replyDelaySecMax); return (Math.random() * (max - min) + min) * 1000; }
+    function getRandomLetterDelayMs() { let min = Math.max(0.5, letterDelayMin); let max = Math.max(min+0.5, letterDelayMax); return (Math.random() * (max - min) + min) * 60 * 60 * 1000; }
+    function replyToUser() {
+        if(phrases.length === 0) return;
+        const count = Math.floor(Math.random() * 3) + 1;
+        const shuffled = [...phrases];
+        for(let i=shuffled.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
+        const selected = shuffled.slice(0, Math.min(count, shuffled.length));
+        const repliers = members.filter(m => m.name !== currentUser).map(m => m.name);
+        if(repliers.length === 0) return;
+        selected.forEach((item, idx) => {
+            const delay = getRandomReplyDelayMs() + (idx * 800);
+            setTimeout(() => { const replier = repliers[Math.floor(Math.random() * repliers.length)]; addMessage(replier, item.text, null, false, false); }, delay);
+        });
+    }
+    function sendActiveMessage() {
+        if(!enableActive || phrases.length === 0) return;
+        const idx = Math.floor(Math.random() * phrases.length);
+        const sentence = phrases[idx].text;
+        const senders = members.filter(m => m.name !== currentUser).map(m => m.name);
+        if(senders.length === 0) return;
+        const sender = senders[Math.floor(Math.random() * senders.length)];
+        addMessage(sender, sentence, null, false, false);
+        scheduleActiveMessage();
+    }
+    function scheduleActiveMessage() {
+        if(activeTimer) clearTimeout(activeTimer);
+        if(!enableActive) return;
+        const minMs = activeMin * 60 * 1000, maxMs = activeMax * 60 * 1000;
+        const delay = Math.floor(Math.random() * (maxMs - minMs + 1) + minMs);
+        activeTimer = setTimeout(() => { sendActiveMessage(); }, delay);
+    }
+    function onUserSend() { if(activeTimer) clearTimeout(activeTimer); replyToUser(); scheduleActiveMessage(); }
+    function sendText() { let inp=document.getElementById('msgInput'); let txt=inp.value.trim(); if(!txt) return; addMessage(currentUser, txt, null); inp.value=''; onUserSend(); }
+    function sendImage() { let input=document.createElement('input'); input.type='file'; input.accept='image/*'; input.onchange=e=>{ let file=e.target.files[0]; if(!file) return; let reader=new FileReader(); reader.onload=ev=>{ addMessage(currentUser, null, ev.target.result); onUserSend(); }; reader.readAsDataURL(file); }; input.click(); }
+    function executeReply() {
+        if(phrases.length === 0) { showToast("词库为空，无法回信"); return false; }
+        const replyCount = Math.floor(Math.random() * (30 - 10 + 1) + 10);
+        const shuffled = [...phrases];
+        for(let i=shuffled.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
+        const selected = shuffled.slice(0, Math.min(replyCount, shuffled.length));
+        let delay = 0;
+        const repliers = members.filter(m => m.name !== currentUser).map(m => m.name);
+        if(repliers.length === 0) return false;
+        selected.forEach(item => { setTimeout(() => { const replier = repliers[Math.floor(Math.random() * repliers.length)]; addMessage(replier, item.text, null, false, true); }, delay); delay += 1500; });
+        return true;
+    }
+    function scheduleLetterReply(letterContent) {
+        if(currentLetterTimer) clearTimeout(currentLetterTimer);
+        const delayMs = getRandomLetterDelayMs();
+        const letterData = { time: Date.now(), content: letterContent, delayMs: delayMs };
+        localStorage.setItem(FAMILY_PREFIX + 'pendingLetter', JSON.stringify(letterData));
+        currentLetterTimer = setTimeout(() => { const pending = localStorage.getItem(FAMILY_PREFIX + 'pendingLetter'); if(pending) { executeReply(); localStorage.removeItem(FAMILY_PREFIX + 'pendingLetter'); } currentLetterTimer = null; }, delayMs);
+        const hours = (delayMs / (60 * 60 * 1000)).toFixed(1);
+        showToast(`✉️ 信已发出，预计 ${hours} 小时后收到回信`);
+    }
+    function manualForceReply() {
+        const pendingStr = localStorage.getItem(FAMILY_PREFIX + 'pendingLetter');
+        if(!pendingStr) { showToast("没有等待回信的信件"); return; }
+        let pending;
+        try { pending = JSON.parse(pendingStr); } catch(e) { showToast("数据错误"); return; }
+        const now = Date.now();
+        const maxDelayMs = letterDelayMax * 60 * 60 * 1000;
+        if(now - pending.time >= maxDelayMs) { executeReply(); localStorage.removeItem(FAMILY_PREFIX + 'pendingLetter'); if(currentLetterTimer) clearTimeout(currentLetterTimer); currentLetterTimer = null; showToast("✅ 已手动补发回信"); }
+        else { const remaining = pending.time + pending.delayMs - now; const hours = (remaining / (60 * 60 * 1000)).toFixed(1); showToast(`⏳ 尚未超过最长时限，还剩约 ${hours} 小时自动回信`); }
+    }
+    function checkAndRecoverLetter() {
+        const pendingStr = localStorage.getItem(FAMILY_PREFIX + 'pendingLetter');
+        if(!pendingStr) return;
+        let pending;
+        try { pending = JSON.parse(pendingStr); } catch(e) { return; }
+        const now = Date.now();
+        const maxDelayMs = letterDelayMax * 60 * 60 * 1000;
+        if(now - pending.time >= maxDelayMs) { if(confirm(`📬 上一封信已超过 ${letterDelayMax} 小时未回！是否立即补发？`)) { executeReply(); localStorage.removeItem(FAMILY_PREFIX + 'pendingLetter'); if(currentLetterTimer) clearTimeout(currentLetterTimer); currentLetterTimer = null; } }
+        else { const remaining = pending.time + pending.delayMs - now; if(remaining > 0) { if(currentLetterTimer) clearTimeout(currentLetterTimer); currentLetterTimer = setTimeout(() => { const checkAgain = localStorage.getItem(FAMILY_PREFIX + 'pendingLetter'); if(checkAgain) { executeReply(); localStorage.removeItem(FAMILY_PREFIX + 'pendingLetter'); } currentLetterTimer = null; }, remaining); const hours = (remaining / (60 * 60 * 1000)).toFixed(1); showToast(`⏳ 上一封信还有约 ${hours} 小时自动回信`); } else { executeReply(); localStorage.removeItem(FAMILY_PREFIX + 'pendingLetter'); } }
+    }
+    function startCall(target, isIncoming = false) { if(callActive) return; const callModal = document.getElementById('callModal'); const callStatus = document.getElementById('callStatus'); const callTimerDiv = document.getElementById('callTimer'); const hangupBtn = document.getElementById('hangupBtn'); const callTitle = document.getElementById('callTitle'); const callButtonsDiv = document.getElementById('callButtons'); callTitle.innerText = isIncoming ? `与 ${target} 通话中` : `正在呼叫 ${target}...`; callButtonsDiv.style.display = 'none'; callStatus.innerText = isIncoming ? '通话中' : '等待接听...'; hangupBtn.style.display = 'inline-block'; if(!isIncoming) { setTimeout(() => { if(!callActive) { callActive = true; callStatus.innerText = '通话中'; callTimerDiv.style.display = 'block'; callStartTime = Date.now(); if(callTimerInterval) clearInterval(callTimerInterval); callTimerInterval = setInterval(() => { if(callActive && callStartTime) { const elapsed = Math.floor((Date.now() - callStartTime) / 1000); const mins = Math.floor(elapsed / 60); const secs = elapsed % 60; callTimerDiv.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`; } }, 1000); addMessage('系统', `📞 与 ${target} 开始视频通话`, null); } }, 2000 + Math.random()*1000); } else { callActive = true; callStatus.innerText = '通话中'; callTimerDiv.style.display = 'block'; callStartTime = Date.now(); if(callTimerInterval) clearInterval(callTimerInterval); callTimerInterval = setInterval(() => { if(callActive && callStartTime) { const elapsed = Math.floor((Date.now() - callStartTime) / 1000); const mins = Math.floor(elapsed / 60); const secs = elapsed % 60; callTimerDiv.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`; } }, 1000); addMessage('系统', `📞 与 ${target} 开始视频通话`, null); } callModal.style.display = 'flex'; hangupBtn.onclick = () => { if(callActive) { clearInterval(callTimerInterval); addMessage('系统', `📞 与 ${target} 的视频通话已结束 (${callTimerDiv.innerText})`, null); callActive = false; callStartTime = null; } resetCallModal(); callModal.style.display = 'none'; }; }
+    function resetCallModal() { const callModal = document.getElementById('callModal'); const callStatus = document.getElementById('callStatus'); const callTimerDiv = document.getElementById('callTimer'); const hangupBtn = document.getElementById('hangupBtn'); const callTitle = document.getElementById('callTitle'); const callButtonsDiv = document.getElementById('callButtons'); callTitle.innerText = '选择通话对象'; callButtonsDiv.style.display = 'block'; callStatus.innerText = ''; callTimerDiv.style.display = 'none'; hangupBtn.style.display = 'none'; if(callTimerInterval) clearInterval(callTimerInterval); callActive = false; callStartTime = null; }
+    function incomingCall(from) { if(!enableIncoming) return; const incomingModal = document.getElementById('incomingModal'); document.getElementById('incomingFrom').innerText = `📞 来自 ${from} 的视频邀请`; incomingModal.style.display = 'flex'; if(incomingTimeout) clearTimeout(incomingTimeout); incomingTimeout = setTimeout(() => { incomingModal.style.display = 'none'; }, 30000); document.getElementById('acceptBtn').onclick = () => { incomingModal.style.display = 'none'; startCall(from, true); }; document.getElementById('rejectBtn').onclick = () => { incomingModal.style.display = 'none'; addMessage('系统', `📞 拒绝来自 ${from} 的视频通话`, null); }; }
+    function scheduleIncomingCall() { if(incomingTimer) clearTimeout(incomingTimer); if(!enableIncoming) return; const minMs = callMin * 60 * 1000, maxMs = callMax * 60 * 1000; const delay = Math.floor(Math.random() * (maxMs - minMs + 1) + minMs); incomingTimer = setTimeout(() => { const callers = members.filter(m => m.name !== currentUser).map(m => m.name); if(callers.length === 0) return; const caller = callers[Math.floor(Math.random() * callers.length)]; incomingCall(caller); scheduleIncomingCall(); }, delay); }
+    function renderCategories() {
+        const area = document.getElementById('categoryList');
+        area.innerHTML = categories.map((cat, idx) => `<div class="category-item"><span>${escapeHtml(cat)}</span><button class="del-cat" data-idx="${idx}">✖</button></div>`).join('');
+        document.querySelectorAll('.del-cat').forEach(btn => btn.addEventListener('click', (e) => { const idx = parseInt(btn.dataset.idx); const catName = categories[idx]; if(catName === "默认") { alert("不能删除默认分类"); return; } categories.splice(idx,1); phrases.forEach(p => { if(p.category === catName) p.category = "默认"; }); saveAllData(); renderCategories(); renderPhrases(); updateCatSelect(); }));
+    }
+    function addCategory() { let newCat = prompt("新分类名"); if(newCat && newCat.trim() && !categories.includes(newCat.trim())) { categories.push(newCat.trim()); saveAllData(); renderCategories(); updateCatSelect(); } else alert("无效或重复"); }
+    function updateCatSelect() { const select = document.getElementById('newPhraseCat'); select.innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join(''); }
+    function renderPhrases() { const area = document.getElementById('phraseList'); area.innerHTML = phrases.map((p, idx) => `<div class="phrase-item"><div class="phrase-info"><span>${escapeHtml(p.text)}</span><span class="phrase-cat">${escapeHtml(p.category)}</span></div><button class="del-phrase" data-idx="${idx}">✖</button></div>`).join(''); document.querySelectorAll('.del-phrase').forEach(btn => btn.addEventListener('click', (e) => { const idx = parseInt(btn.dataset.idx); phrases.splice(idx,1); saveAllData(); renderPhrases(); })); }
+    function addPhraseBatch() {
+        const raw = document.getElementById('newPhraseText').value;
+        const lines = raw.split(/\r?\n/);
+        const cat = document.getElementById('newPhraseCat').value;
+        let addedCount = 0;
+        for (let line of lines) {
+            let trimmed = line.trim();
+            if (trimmed === "") continue;
+            phrases.push({ text: trimmed, category: cat });
+            addedCount++;
+        }
+        if (addedCount === 0) { showToast("📭 没有有效的句子，请填写内容"); return; }
+        saveAllData();
+        renderPhrases();
+        document.getElementById('newPhraseText').value = '';
+        showToast(`✅ 成功添加 ${addedCount} 条字卡 (分类: ${cat})`);
+    }
+    function exportPhrases() { const data = { categories, phrases }; const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `family_phrases_${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href); }
+    function importJson() { const input = document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange=e=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); if(d.categories) { categories=d.categories; saveAllData(); renderCategories(); updateCatSelect(); } if(d.phrases) { phrases=d.phrases; saveAllData(); renderPhrases(); } alert("导入成功"); }catch(e){ alert("解析失败"); } }; reader.readAsText(file); }; input.click(); }
+    function bindEvents() {
+        document.getElementById('activeMinMin').onchange = function() { activeMin = parseFloat(this.value); if(activeMin<0.5) activeMin=0.5; saveAllData(); if(enableActive) scheduleActiveMessage(); };
+        document.getElementById('activeMaxMin').onchange = function() { activeMax = parseFloat(this.value); if(activeMax<=activeMin) activeMax=activeMin+0.5; saveAllData(); if(enableActive) scheduleActiveMessage(); };
+        document.getElementById('enableActiveTalk').onchange = e => { enableActive = e.target.checked; saveAllData(); if(enableActive) scheduleActiveMessage(); else if(activeTimer) clearTimeout(activeTimer); };
+        document.getElementById('replyDelaySecMin').onchange = function() { replyDelaySecMin = parseFloat(this.value); if(replyDelaySecMin<1) replyDelaySecMin=1; saveAllData(); };
+        document.getElementById('replyDelaySecMax').onchange = function() { replyDelaySecMax = parseFloat(this.value); if(replyDelaySecMax<=replyDelaySecMin) replyDelaySecMax=replyDelaySecMin+1; saveAllData(); };
+        document.getElementById('letterDelayMin').onchange = function() { letterDelayMin = parseFloat(this.value); if(letterDelayMin<0.5) letterDelayMin=0.5; saveAllData(); };
+        document.getElementById('letterDelayMax').onchange = function() { letterDelayMax = parseFloat(this.value); if(letterDelayMax<=letterDelayMin) letterDelayMax=letterDelayMin+0.5; saveAllData(); };
+        document.getElementById('callMinMin').onchange = function() { callMin = parseFloat(this.value); if(callMin<1) callMin=1; saveAllData(); if(enableIncoming) scheduleIncomingCall(); };
+        document.getElementById('callMaxMin').onchange = function() { callMax = parseFloat(this.value); if(callMax<=callMin) callMax=callMin+1; saveAllData(); if(enableIncoming) scheduleIncomingCall(); };
+        document.getElementById('enableIncomingCall').onchange = e => { enableIncoming = e.target.checked; saveAllData(); if(enableIncoming) scheduleIncomingCall(); else if(incomingTimer) clearTimeout(incomingTimer); };
+        document.getElementById('sendBtn').onclick = sendText;
+        document.getElementById('msgInput').addEventListener('keypress', e => { if(e.key === 'Enter') sendText(); });
+        document.getElementById('emojiBtn').onclick = sendImage;
+        document.getElementById('addPhraseBtn').onclick = addPhraseBatch;
+        document.getElementById('addCategoryBtn').onclick = addCategory;
+        document.getElementById('importJsonBtn').onclick = importJson;
+        document.getElementById('exportJsonBtn').onclick = exportPhrases;
+        document.getElementById('videoCallBtn').onclick = () => { resetCallModal(); document.getElementById('callModal').style.display = 'flex'; };
+        document.querySelectorAll('#callButtons button').forEach(btn => btn.addEventListener('click', (e) => { const target = e.target.getAttribute('data-target'); if(target) startCall(target); }));
+        document.getElementById('closeCallBtn').addEventListener('click', () => { document.getElementById('callModal').style.display = 'none'; resetCallModal(); });
+        const letterModal = document.getElementById('letterModal');
+        document.getElementById('letterBtn').onclick = () => letterModal.style.display = 'flex';
+        document.getElementById('closeLetterBtn').onclick = () => letterModal.style.display = 'none';
+        document.getElementById('sendLetterBtn').onclick = () => { const content = document.getElementById('letterContent').value.trim(); if(!content) return; addMessage(currentUser, content, null, true, false); scheduleLetterReply(content); letterModal.style.display = 'none'; document.getElementById('letterContent').value = ''; };
+        document.getElementById('forceReplyBtn').onclick = manualForceReply;
+        const sidebar = document.getElementById('sidebar'); const menuBtn = document.getElementById('menuBtn'); const overlay = document.getElementById('menuOverlay');
+        menuBtn.onclick = () => { sidebar.classList.add('open'); overlay.style.display = 'block'; };
+        overlay.onclick = () => { sidebar.classList.remove('open'); overlay.style.display = 'none'; };
+        sidebar.addEventListener('click', (e) => e.stopPropagation());
+    }
+    function init() {
+        loadAllData();
+        renderCategories(); renderPhrases(); updateCatSelect(); renderMessages();
+        bindEvents();
+        if(enableActive) scheduleActiveMessage();
+        if(enableIncoming) scheduleIncomingCall();
+        checkAndRecoverLetter();
+        if (Notification.permission === 'default') Notification.requestPermission();
+        document.getElementById('copyBtn').onclick = () => { const html = document.documentElement.outerHTML; navigator.clipboard.writeText(html).then(() => alert('代码已复制，可保存为.html文件')); };
+    }
+    init();
+</script>
+</body>
+</html>
